@@ -8,6 +8,8 @@ import numpy as np
 import torch
 from pathlib import Path
 from scipy.signal import butter, filtfilt
+import mne
+mne.set_log_level('WARNING')
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -39,9 +41,19 @@ class EEG():
     def apply_filter(data, lowcut, highcut, fs, order=4):
         b, a = EEG.butter_bandpass(lowcut, highcut, fs, order)
         return filtfilt(b, a, data, axis=0)
+    
+    @staticmethod
+    def create_raw_from_numpy(data, sfreq=128):
+        ch_names = ['AF3', 'F7', 'F3', 'FC5', 'T7', 'P7', 'O1', 'O2', 'P8', 'T8', 'FC6', 'F4', 'F8', 'AF4']
+        ch_types = ['eeg'] * len(ch_names)
+        info = mne.create_info(ch_names=ch_names, sfreq=sfreq, ch_types=ch_types)
+        raw = mne.io.RawArray(data, info)
+        raw.filter(l_freq=4, h_freq=25)
+        # print(raw.get_data())
+        return raw.get_data()
 
 if __name__ == "__main__":
-    path = Path(r"/media/sumit/dd6174bf-2d05-4a68-9324-d66b0a8e63762/EEG/deploy/TEST")
+    path = Path(r"/media/sumit/dd6174bf-2d05-4a68-9324-d66b0a8e63762/EEG/TEST")
     epochs_dict = []
     
     pr = EEG()
@@ -79,14 +91,12 @@ if __name__ == "__main__":
         for j in range(len(epochs_dict[i])): 
             small = []
             for k in range(len(epochs_dict[i][j])):
-                df = pd.DataFrame(epochs_dict[i][j])
-                df_tensor = torch.tensor(df.values, dtype=torch.float32, device=device)
-                df_filtered_numpy = pr.apply_filter(df_tensor.cpu().numpy(), lowcut, highcut, fs)
-                df_filtered = torch.tensor(df_filtered_numpy.copy(), dtype=torch.float32, device=device)
-                small.append(df_filtered.to(device))
+                np_data = np.array(epochs_dict[i][j])
+                # print(len(np_data))
+                # print(len(np_data[0]))
+                np_data = np_data.T
+                raw_data = pr.create_raw_from_numpy(np_data)
                 inner_pbar.update(1)
-
-            final_epochs_dict.append(small)
 
         inner_pbar.close()
         outer_pbar.update(1)

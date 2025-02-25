@@ -112,7 +112,7 @@ def modal(data_list,label_list):
     val_loader = DataLoader(val_dataset, batch_size=128, shuffle=False)
     test_loader = DataLoader(test_dataset, batch_size=128, shuffle=False)
 
-    model = EEGTransformer(maxlen=401, num_features=64, num_classes=4, embed_dim=32, num_heads=7, ff_dim=64)
+    model = EEGTransformer(maxlen=401, num_features=64, num_classes=8, embed_dim=32, num_heads=7, ff_dim=64)
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.Adam(model.parameters(), lr=0.001)
 
