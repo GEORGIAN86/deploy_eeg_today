@@ -9,6 +9,8 @@ import torch.optim as optim
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
+print("device.....",device)
+
 class EEGDataset(Dataset):
     def __init__(self, data, labels):
         self.data = torch.tensor(data, dtype=torch.float32)
@@ -126,5 +128,5 @@ def modal(data_list, label_list):
     train_model(model, train_loader, val_loader, criterion, optimizer)
 
     test_loss, test_acc = evaluate_model(model, test_loader, criterion)
-    
+
     print(f"Test Loss: {test_loss:.4f}, Test Accuracy: {test_acc:.4f}")
