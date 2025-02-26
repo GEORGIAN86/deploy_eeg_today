@@ -26,7 +26,6 @@ class TransformerBlock(nn.Module):
         self.attention = nn.MultiheadAttention(embed_dim, num_heads)
         self.norm1 = nn.LayerNorm(embed_dim)
         self.norm2 = nn.LayerNorm(embed_dim)
-        
         self.ffn = nn.Sequential(
             nn.Linear(embed_dim, ff_dim),
             nn.ReLU(),
@@ -40,7 +39,6 @@ class TransformerBlock(nn.Module):
         ffn_output = self.ffn(x)
         x = self.norm2(x + self.dropout(ffn_output))
         return x
-
 
 class EEGTransformer(nn.Module):
     def __init__(self, maxlen, num_features, num_classes, embed_dim, num_heads, ff_dim, dropout=0.1):
@@ -56,13 +54,12 @@ class EEGTransformer(nn.Module):
     def forward(self, x):
         x = self.embedding(x) + self.positional_encoding
         x = self.transformer(x)
-        x = x.permute(0, 2, 1)  # Change shape for pooling
+        x = x.permute(0, 2, 1)
         x = self.global_avg_pool(x).squeeze(-1)
         x = F.relu(self.fc1(x))
         x = self.dropout(x)
         x = self.fc2(x)
         return x
-
 
 def train_model(model, train_loader, val_loader, criterion, optimizer, epochs=150):
     model.to(device)
@@ -76,25 +73,32 @@ def train_model(model, train_loader, val_loader, criterion, optimizer, epochs=15
             loss = criterion(outputs, targets)
             loss.backward()
             optimizer.step()
-            total_loss += loss.item()
+            total_loss += loss.item() * inputs.size(0)
             correct += (outputs.argmax(1) == targets).sum().item()
             total += targets.size(0)
-        val_acc = evaluate_model(model, val_loader)
-        print(f"Epoch {epoch + 1}: Loss = {total_loss / total:.4f}, Val Acc = {val_acc:.4f}")
-        
-        
-def evaluate_model(model, dataloader):
+        train_loss = total_loss / total
+        train_acc = correct / total
+        val_loss, val_acc = evaluate_model(model, val_loader, criterion)
+        print(f"Epoch {epoch + 1}: Train Loss = {train_loss:.4f}, Train Acc = {train_acc:.4f}, Val Loss = {val_loss:.4f}, Val Acc = {val_acc:.4f}")
+
+def evaluate_model(model, dataloader, criterion=None):
     model.eval()
-    correct, total = 0, 0
+    total_loss, correct, total = 0, 0, 0
     with torch.no_grad():
         for inputs, targets in dataloader:
             inputs, targets = inputs.to(device), targets.to(device)
             outputs = model(inputs)
+            if criterion:
+                loss = criterion(outputs, targets)
+                total_loss += loss.item() * inputs.size(0)
             correct += (outputs.argmax(1) == targets).sum().item()
             total += targets.size(0)
+    if criterion:
+        return total_loss / total, correct / total
     return correct / total
 
-def modal(data_list,label_list):
+def modal(data_list, label_list):
+
     X = np.array(data_list, dtype=np.float32)
     y = np.array(label_list, dtype=np.int64)
 
@@ -103,19 +107,24 @@ def modal(data_list,label_list):
     joblib.dump(scaler, 'scaler.pkl')
 
     dataset = EEGDataset(X, y)
-    train_size = int(0.6 * len(dataset))
+
+    train_size = int(0.8 * len(dataset))
     val_size = int(0.2 * len(dataset))
     test_size = len(dataset) - train_size - val_size
-    train_dataset, val_dataset, test_dataset = random_split(dataset, [train_size, val_size, test_size])
 
+    train_dataset, val_dataset, test_dataset = random_split(dataset, [train_size, val_size, test_size])
     train_loader = DataLoader(train_dataset, batch_size=128, shuffle=True)
     val_loader = DataLoader(val_dataset, batch_size=128, shuffle=False)
     test_loader = DataLoader(test_dataset, batch_size=128, shuffle=False)
 
-    model = EEGTransformer(maxlen=401, num_features=64, num_classes=8, embed_dim=32, num_heads=7, ff_dim=64)
+    model = EEGTransformer(maxlen=640, num_features=14, num_classes=8, embed_dim=32, num_heads=8, ff_dim=64)
+
     criterion = nn.CrossEntropyLoss()
+
     optimizer = optim.Adam(model.parameters(), lr=0.001)
 
     train_model(model, train_loader, val_loader, criterion, optimizer)
-    test_acc = evaluate_model(model, test_loader)
-    print(f"Test Accuracy: {test_acc:.4f}")
+
+    test_loss, test_acc = evaluate_model(model, test_loader, criterion)
+    
+    print(f"Test Loss: {test_loss:.4f}, Test Accuracy: {test_acc:.4f}")

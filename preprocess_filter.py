@@ -31,7 +31,8 @@ def load_csv_data(subdir_path, chunk_size=640, step_size=128, sfreq=128):
                 epochs.append(chunk.tolist())
     return epochs[5:-5]
 
-if __name__ == "__main__":
+# if __name__ == "__main__":
+def preprocess():
     path = Path(r"/media/sumit/dd6174bf-2d05-4a68-9324-d66b0a8e63762/EEG/TEST")
     epochs_dict = []
 
@@ -45,5 +46,17 @@ if __name__ == "__main__":
             print(subdir)
             epochs_dict.append(load_csv_data(subdir))
     
-    for i, epoch in enumerate(epochs_dict):
-        print(f"Subject_wise_Epochs {i} shape: {np.array(epoch).shape}")
+    # for i, epoch in enumerate(epochs_dict):
+    #     print(f"Subject_wise_Epochs {i} shape: {np.array(epoch).shape}")
+
+    final_epoch_label = [[i for _ in epochs] for i, epochs in enumerate(epochs_dict)]
+    data_list = [item for sublist in epochs_dict for item in sublist]
+    label_list = [item for sublist in final_epoch_label for item in sublist]
+
+    print(len(data_list))
+    print(len(data_list[0]))
+    print(len(data_list[0][0]))
+
+    print(len(label_list))
+
+    return data_list,label_list

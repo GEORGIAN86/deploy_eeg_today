@@ -46,5 +46,5 @@ def plot_eeg_colored(file_path, duration=15, sfreq=128):
     plt.tight_layout()
     plt.show()
 
-sample_csv = Path("/media/sumit/dd6174bf-2d05-4a68-9324-d66b0a8e63762/EEG/TEST/1/data1.csv")
+sample_csv = Path("/media/sumit/dd6174bf-2d05-4a68-9324-d66b0a8e63762/EEG/TEST/1/data2.csv")
 plot_eeg_colored(sample_csv)    
