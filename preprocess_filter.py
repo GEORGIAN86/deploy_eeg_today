@@ -33,7 +33,7 @@ def load_csv_data(subdir_path, chunk_size=640, step_size=128, sfreq=128):
 
 # if __name__ == "__main__":
 def preprocess():
-    path = Path(r"/media/sumit/dd6174bf-2d05-4a68-9324-d66b0a8e63762/EEG/TEST")
+    path = Path(r"C:\Users\pawasthi\Desktop\TEST")
     epochs_dict = []
 
     if path.exists() and path.is_dir():
@@ -53,10 +53,10 @@ def preprocess():
     data_list = [item for sublist in epochs_dict for item in sublist]
     label_list = [item for sublist in final_epoch_label for item in sublist]
 
-    print(len(data_list))
-    print(len(data_list[0]))
-    print(len(data_list[0][0]))
+    # print(len(data_list))
+    # print(len(data_list[0]))
+    # print(len(data_list[0][0]))
 
-    print(len(label_list))
+    # print(len(label_list))
 
     return data_list,label_list

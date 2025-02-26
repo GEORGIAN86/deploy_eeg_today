@@ -63,7 +63,7 @@ class EEGTransformer(nn.Module):
         x = self.fc2(x)
         return x
 
-def train_model(model, train_loader, val_loader, criterion, optimizer, epochs=150):
+def train_model(model, train_loader, val_loader, criterion, optimizer, epochs=500):
     model.to(device)
     for epoch in range(epochs):
         model.train()
@@ -115,9 +115,9 @@ def modal(data_list, label_list):
     test_size = len(dataset) - train_size - val_size
 
     train_dataset, val_dataset, test_dataset = random_split(dataset, [train_size, val_size, test_size])
-    train_loader = DataLoader(train_dataset, batch_size=128, shuffle=True)
-    val_loader = DataLoader(val_dataset, batch_size=128, shuffle=False)
-    test_loader = DataLoader(test_dataset, batch_size=128, shuffle=False)
+    train_loader = DataLoader(train_dataset, batch_size=64, shuffle=True)
+    val_loader = DataLoader(val_dataset, batch_size=64, shuffle=False)
+    test_loader = DataLoader(test_dataset, batch_size=64, shuffle=False)
 
     model = EEGTransformer(maxlen=640, num_features=14, num_classes=8, embed_dim=32, num_heads=8, ff_dim=64)
 
@@ -130,3 +130,4 @@ def modal(data_list, label_list):
     test_loss, test_acc = evaluate_model(model, test_loader, criterion)
 
     print(f"Test Loss: {test_loss:.4f}, Test Accuracy: {test_acc:.4f}")
+    joblib.dump(model,"model.pkl")
